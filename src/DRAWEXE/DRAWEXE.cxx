@@ -34,6 +34,7 @@
   #include <ViewerTest.hxx>
   #include <XSDRAWSTLVRML.hxx>
   #include <XDEDRAW.hxx>
+  #include <JLCTest.hxx>
 #endif
 
 Standard_IMPORT Standard_Boolean Draw_Interprete (const char* theCommand);
@@ -208,6 +209,10 @@ static Standard_Integer Pload (Draw_Interpretor& theDI,
       aPlugins.Add ("XSDRAW");
       aPlugins.Add ("XDEDRAW");
     }
+    else if (anArg == "JLC")
+    {
+      aPlugins.Add ("JLC");
+    }
     else if (anArg == "ALL")
     {
       aPlugins.Add ("TOPTEST");
@@ -215,6 +220,7 @@ static Standard_Integer Pload (Draw_Interpretor& theDI,
       aPlugins.Add ("XSDRAW");
       aPlugins.Add ("XDEDRAW");
       aPlugins.Add ("AISV");
+      aPlugins.Add ("JLC");
     }
     else
     {
@@ -259,6 +265,10 @@ static Standard_Integer Pload (Draw_Interpretor& theDI,
     else if (aPlugin == "XDEDRAW")
     {
       XDEDRAW::Factory (theDI);
+    }
+    else if (aPlugin == "JLC")
+    {
+      JLCTest::Factory (theDI);
     }
     //else if (aPlugin == "TOBJ")       { TObjDRAW::Factory (theDI); }
     //else if (aPlugin == "QACOMMANDS") { QADraw::Factory (theDI); }

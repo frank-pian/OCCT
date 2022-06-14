@@ -475,3 +475,5 @@ n TreeModel
 n View
 n ViewControl
 n VInspector
+n JLCTest
+t TKJLCDraw

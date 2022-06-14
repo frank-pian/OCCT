@@ -52,6 +52,7 @@ TKStdL
 TKLCAF
 TKCDF
 TKernel
+TKJLCDraw
 CSF_TclTkLibs
 CSF_TclLibs
 CSF_OpenVR
