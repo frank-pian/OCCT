@@ -55,6 +55,8 @@
 #include <Interface_Static.hxx>
 #include <UnitsMethods.hxx>
 
+#include <APIHeaderSection_MakeHeader.hxx>
+
 #include <stdio.h>
 
 //============================================================
@@ -512,6 +514,10 @@ static Standard_Integer WriteStep (Draw_Interpretor& di, Standard_Integer argc, 
       }
     k++;
   }
+  APIHeaderSection_MakeHeader makeHeader(writer.ChangeWriter().Model());
+  Handle(TCollection_HAsciiString) fileDescription = new TCollection_HAsciiString("Designed by EasyEDA Pro");
+  makeHeader.SetDescriptionValue(1, fileDescription);
+
   TDF_Label label;
   if( argc > k)
   {
