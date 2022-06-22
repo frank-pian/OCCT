@@ -262,7 +262,7 @@ Standard_Boolean RWStl::writeASCII (const Handle(Poly_Triangulation)& theMesh,
                                     const Message_ProgressRange& theProgress)
 {
   // note that space after 'solid' is necessary for many systems
-  if (fwrite ("solid \n", 1, 7, theFile) != 7)
+  if (fwrite ("solid Designed by EasyEDA Pro\n", 1, 30, theFile) != 30)
   {
     return Standard_False;
   }
