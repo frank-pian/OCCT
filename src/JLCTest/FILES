@@ -1,2 +1,6 @@
 JLCTest.cxx
 JLCTest.hxx
+ObjExport.cxx
+ObjExport.hxx
+XCAFTemplate.cxx
+XCAFTemplate.hxx

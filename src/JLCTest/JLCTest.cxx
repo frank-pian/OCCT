@@ -7,6 +7,8 @@
 #include <BRepExtrema_ShapeProximity.hxx>
 #include <Draw.hxx>
 #include <OSD_Timer.hxx>
+#include <TopExp_Explorer.hxx>
+#include <ObjExport.hxx>
 
 static Standard_Integer JLCTestCommand(Draw_Interpretor &di,
                                        Standard_Integer argc,
@@ -107,6 +109,37 @@ static int LCProximity (Draw_Interpretor& di, Standard_Integer argc, const char*
   return 0;
 }
 
+static Standard_Integer LCWriteObj(Draw_Interpretor& di,
+                                Standard_Integer argc,
+                                const char** argv)
+{
+    TopoDS_Shape aShape = DBRep::Get(argv[1]);
+
+    Standard_Boolean isMultiFile = Standard_False;
+    Standard_Integer num = 1;
+    if (argc > 3)
+    {
+        TCollection_AsciiString aVisArg (argv[3]);
+        if (aVisArg == "0")
+        {
+            isMultiFile = Standard_False;
+        }else if (aVisArg == "1") {
+            isMultiFile = Standard_True;
+        }
+    }
+    for (TopExp_Explorer aExpSolid(aShape, TopAbs_SOLID); aExpSolid.More(); aExpSolid.Next())
+    {
+        std::ostringstream path;
+        path << argv[2] << "-" << num;
+        std::string path_s = path.str();
+        di << path_s.c_str() << "\n";
+        std::unique_ptr<ObjExport> theObjExport(new ObjExport);
+        theObjExport->assemShape2obj(aExpSolid.Current(), path_s, isMultiFile);
+        num ++;
+    }
+    return 0;
+}
+
 //=======================================================================
 // function : CommonCommands
 // purpose  :
@@ -125,6 +158,12 @@ void JLCTest::CommonCommands(Draw_Interpretor &theCommands)
                     "proximity Shape1 Shape2 [-tol <value>] [-profile]",
                     __FILE__,
                     LCProximity,
+                    group);
+    
+    theCommands.Add("LCWriteObj",
+                    "Shape write Obj file, mutiple files",
+                    __FILE__,
+                    LCWriteObj,
                     group);
 }
 
