@@ -21,16 +21,9 @@
 #include <ViewerTest_AutoUpdater.hxx>
 
 #include <Draw.hxx>
-#include <TopLoc_Location.hxx>
 #include <TopTools_HArray1OfShape.hxx>
-#include <TColStd_HArray1OfTransient.hxx>
-#include <TColStd_SequenceOfAsciiString.hxx>
 #include <TColStd_HSequenceOfAsciiString.hxx>
 #include <TColStd_MapOfTransient.hxx>
-#include <OSD_Timer.hxx>
-#include <Geom_Axis2Placement.hxx>
-#include <Geom_Axis1Placement.hxx>
-#include <gp_Trsf.hxx>
 #include <TopExp_Explorer.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <StdSelect_ShapeTypeFilter.hxx>
@@ -38,10 +31,8 @@
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_Trihedron.hxx>
 #include <AIS_Axis.hxx>
-#include <AIS_TypeFilter.hxx>
 #include <AIS_SignatureFilter.hxx>
 #include <AIS_ListOfInteractive.hxx>
-#include <AIS_ListIteratorOfListOfInteractive.hxx>
 #include <Aspect_InteriorStyle.hxx>
 #include <Aspect_Window.hxx>
 #include <Aspect_XRSession.hxx>
@@ -59,7 +50,6 @@
 #include <Prs3d_ShadingAspect.hxx>
 #include <Prs3d_IsoAspect.hxx>
 #include <Prs3d_PointAspect.hxx>
-#include <PrsDim.hxx>
 #include <PrsDim_Relation.hxx>
 #include <Select3D_SensitiveWire.hxx>
 #include <Select3D_SensitivePrimitiveArray.hxx>
@@ -521,40 +511,26 @@ static void GetTypeAndSignfromString (const char* theName,
 }
 
 #include <string.h>
-#include <Draw_Interpretor.hxx>
-#include <Draw.hxx>
 #include <Draw_Appli.hxx>
 #include <DBRep.hxx>
 
 
-#include <TCollection_AsciiString.hxx>
-#include <V3d_Viewer.hxx>
 #include <V3d_View.hxx>
-#include <V3d.hxx>
 
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_Shape.hxx>
 #include <AIS_DisplayMode.hxx>
-#include <TColStd_MapOfInteger.hxx>
-#include <ViewerTest_DoubleMapOfInteractiveAndName.hxx>
 #include <ViewerTest_DoubleMapIteratorOfDoubleMapOfInteractiveAndName.hxx>
 #include <ViewerTest_EventManager.hxx>
 
-#include <TopoDS_Solid.hxx>
-#include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 
-#include <TopoDS.hxx>
 #include <BRep_Tool.hxx>
 
 
 #include <Draw_Window.hxx>
-#include <AIS_ListIteratorOfListOfInteractive.hxx>
-#include <AIS_ListOfInteractive.hxx>
-#include <AIS_DisplayMode.hxx>
 #include <TopTools_ListOfShape.hxx>
-#include <BRepOffsetAPI_MakeThickSolid.hxx>
 
 //==============================================================================
 //  VIEWER OBJECT MANAGEMENT GLOBAL VARIABLES
@@ -1707,6 +1683,9 @@ struct ViewerTest_AspectsChangeSet
   Graphic3d_AlphaMode          AlphaMode;
   Standard_ShortReal           AlphaCutoff;
 
+  Standard_Integer             ToSetFaceCulling;
+  Graphic3d_TypeOfBackfacingModel FaceCulling;
+
   Standard_Integer             ToSetMaterial;
   Graphic3d_NameOfMaterial     Material;
   TCollection_AsciiString      MatName;
@@ -1788,6 +1767,8 @@ struct ViewerTest_AspectsChangeSet
     ToSetAlphaMode    (0),
     AlphaMode         (Graphic3d_AlphaMode_BlendAuto),
     AlphaCutoff       (0.5f),
+    ToSetFaceCulling  (0),
+    FaceCulling       (Graphic3d_TypeOfBackfacingModel_Auto),
     ToSetMaterial     (0),
     Material          (Graphic3d_NameOfMaterial_DEFAULT),
     ToSetShowFreeBoundary      (0),
@@ -1835,6 +1816,7 @@ struct ViewerTest_AspectsChangeSet
         && ToSetLineWidth         == 0
         && ToSetTransparency      == 0
         && ToSetAlphaMode         == 0
+        && ToSetFaceCulling       == 0
         && ToSetColor             == 0
         && ToSetBackFaceColor     == 0
         && ToSetMaterial          == 0
@@ -2086,6 +2068,15 @@ struct ViewerTest_AspectsChangeSet
       {
         toRecompute = theDrawer->SetupOwnShadingAspect (aDefDrawer) || toRecompute;
         theDrawer->ShadingAspect()->Aspect()->SetAlphaMode (AlphaMode, AlphaCutoff);
+      }
+    }
+    if (ToSetFaceCulling != 0)
+    {
+      if (ToSetFaceCulling != -1
+       || theDrawer->HasOwnShadingAspect())
+      {
+        toRecompute = theDrawer->SetupOwnShadingAspect (aDefDrawer) || toRecompute;
+        theDrawer->ShadingAspect()->Aspect()->SetFaceCulling (FaceCulling);
       }
     }
     if (ToSetHatch != 0)
@@ -2578,6 +2569,47 @@ static Standard_Integer VAspects (Draw_Interpretor& theDI,
         {
           aChangeSet->AlphaCutoff = (float )aParam2.RealValue();
           ++anArgIter;
+        }
+      }
+    }
+    else if (anArg == "-setfaceculling"
+          || anArg == "-faceculling")
+    {
+      if (++anArgIter >= theArgNb)
+      {
+        Message::SendFail() << "Error: wrong syntax at " << anArg;
+        return 1;
+      }
+
+      aChangeSet->ToSetFaceCulling = 1;
+      {
+        TCollection_AsciiString aParam (theArgVec[anArgIter]);
+        aParam.LowerCase();
+        if (aParam == "auto")
+        {
+          aChangeSet->FaceCulling = Graphic3d_TypeOfBackfacingModel_Auto;
+        }
+        else if (aParam == "backculled"
+              || aParam == "backcull"
+              || aParam == "back")
+        {
+          aChangeSet->FaceCulling = Graphic3d_TypeOfBackfacingModel_BackCulled;
+        }
+        else if (aParam == "frontculled"
+              || aParam == "frontcull"
+              || aParam == "front")
+        {
+          aChangeSet->FaceCulling = Graphic3d_TypeOfBackfacingModel_FrontCulled;
+        }
+        else if (aParam == "doublesided"
+              || aParam == "off")
+        {
+          aChangeSet->FaceCulling = Graphic3d_TypeOfBackfacingModel_DoubleSided;
+        }
+        else
+        {
+          Message::SendFail() << "Error: wrong syntax at '" << aParam << "'";
+          return 1;
         }
       }
     }
@@ -3216,6 +3248,8 @@ static Standard_Integer VAspects (Draw_Interpretor& theDI,
       aChangeSet->ToSetAlphaMode = -1;
       aChangeSet->AlphaMode = Graphic3d_AlphaMode_BlendAuto;
       aChangeSet->AlphaCutoff = 0.5f;
+      aChangeSet->ToSetFaceCulling = -1;
+      aChangeSet->FaceCulling = Graphic3d_TypeOfBackfacingModel_Auto;
       aChangeSet->ToSetColor = -1;
       aChangeSet->Color = DEFAULT_COLOR;
       //aChangeSet->ToSetBackFaceColor = -1; // should be reset by ToSetColor
@@ -6732,7 +6766,7 @@ vsub 0/1 (off/on) [obj] : Subintensity(on/off) of selected objects
 vaspects [-noupdate|-update] [name1 [name2 [...]] | -defaults] [-subshapes subname1 [subname2 [...]]]
          [-visibility {0|1}]
          [-color {ColorName | R G B}] [-unsetColor]
-         [-backfaceColor Color]
+         [-backfaceColor Color] [-faceCulling {auto|back|front|doublesided}]
          [-material MatName] [-unsetMaterial]
          [-transparency Transp] [-unsetTransparency]
          [-width LineWidth] [-unsetWidth]

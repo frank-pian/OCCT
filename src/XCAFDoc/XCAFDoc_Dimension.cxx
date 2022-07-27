@@ -17,7 +17,6 @@
 #include <TDF_ChildIterator.hxx>
 #include <XCAFDoc.hxx>
 #include <TDataStd_TreeNode.hxx>
-#include <Precision.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TDataStd_Integer.hxx>
 #include <TDataStd_IntegerArray.hxx>
@@ -25,7 +24,6 @@
 #include <TDataStd_Real.hxx>
 #include <TDataStd_RealArray.hxx>
 #include <TNaming_Builder.hxx>
-#include <TNaming_NamedShape.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TopoDS.hxx>
 #include <XCAFDimTolObjects_DimensionObject.hxx>
@@ -35,10 +33,10 @@
 IMPLEMENT_DERIVED_ATTRIBUTE(XCAFDoc_Dimension,TDataStd_GenericEmpty)
 enum ChildLab
 {
-  ChildLab_Type = 1,
+  ChildLab_Begin = 1,
+  ChildLab_Type = ChildLab_Begin,
   ChildLab_Value,
   ChildLab_Qualifier,
-  ChildLab_AngularQualifier,
   ChildLab_Class,
   ChildLab_Dec,
   ChildLab_Modifiers,
@@ -52,7 +50,9 @@ enum ChildLab
   ChildLab_PntText,
   ChildLab_Presentation,
   ChildLab_Descriptions,
-  ChildLab_DescriptionNames
+  ChildLab_DescriptionNames,
+  ChildLab_AngularQualifier,
+  ChildLab_End
 };
 
 //=======================================================================
@@ -106,10 +106,9 @@ void XCAFDoc_Dimension::SetObject (const Handle(XCAFDimTolObjects_DimensionObjec
     TDataStd_Name::Set(Label(), str);
   }
 
-  TDF_ChildIterator anIter(Label());
-  for(;anIter.More(); anIter.Next())
+  for (int aChild = ChildLab_Begin; aChild < ChildLab_End; aChild++)
   {
-    anIter.Value().ForgetAllAttributes();
+    Label().FindChild(aChild).ForgetAllAttributes();
   }
   Handle(TDataStd_Integer) aType = TDataStd_Integer::Set(Label().FindChild(ChildLab_Type), theObject->GetType());
 
