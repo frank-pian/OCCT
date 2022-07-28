@@ -176,6 +176,17 @@ void ObjExport::GetSubShapes( const TDF_Label& lab,
         }
     }else if (this->myShapeTool->IsSimpleShape(lab))
     {
+        TopoDS_Shape dispShape(this->myShapeTool->GetShape(lab));
+
+        Bnd_Box B;
+        Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
+        BRepBndLib::Add(dispShape, B);
+        B.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+        Standard_Real aDeflection = MAX3( aXmax-aXmin, aYmax-aYmin, aZmax-aZmin) * 0.01;
+        if (aXmax < 0.01 || aYmax < 0.01 || aZmax < 0.01)
+        {
+            return;
+        }
         OS << "\ng";
         for (auto g=groups.begin(); g!=groups.end(); ++g)
         {
@@ -189,13 +200,6 @@ void ObjExport::GetSubShapes( const TDF_Label& lab,
         }
 
         TopTools_MapOfShape theFacesMap;
-        TopoDS_Shape dispShape(this->myShapeTool->GetShape(lab));
-
-        Bnd_Box B;
-        Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
-        BRepBndLib::Add(dispShape, B);
-        B.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
-        Standard_Real aDeflection = MAX3( aXmax-aXmin, aYmax-aYmin, aZmax-aZmin) * 0.01;
 
         BRepMesh_IncrementalMesh aMesh (dispShape, aDeflection);
 
