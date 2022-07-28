@@ -30,9 +30,9 @@ if (MSVC)
   # suppress warning on using portable non-secure functions in favor of non-portable secure ones
   add_definitions (-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -fPIC")
-  set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fexceptions -fPIC")
-  add_definitions(-DOCC_CONVERT_SIGNALS)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwasm-exceptions -fPIC")
+  set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fwasm-exceptions -fPIC")
+  # add_definitions(-DOCC_CONVERT_SIGNALS)
 endif()
 
 # enable structured exceptions for MSVC

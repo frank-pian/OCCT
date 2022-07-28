@@ -29,6 +29,7 @@ win64
 *.VC.opendb
 *.ipch
 *.aps
+/.vscode
 
 # test results
 /results*
