@@ -183,7 +183,7 @@ void ObjExport::GetSubShapes( const TDF_Label& lab,
         BRepBndLib::Add(dispShape, B);
         B.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
         Standard_Real aDeflection = MAX3( aXmax-aXmin, aYmax-aYmin, aZmax-aZmin) * 0.01;
-        if (aXmax < 0.01 || aYmax < 0.01 || aZmax < 0.01)
+        if ((aXmax-aXmin) < 0.01 || (aYmax-aYmin) < 0.01 || (aZmax-aZmin) < 0.01)
         {
             return;
         }
