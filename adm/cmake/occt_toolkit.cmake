@@ -106,6 +106,12 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
               set (BISON_OUTPUT_FILE_EXT "cxx")
             endif()
           endforeach()
+
+          if (EXISTS ${FLEX_BISON_TARGET_DIR}/FlexLexer.h)
+            message (STATUS "Info: remove old FLEX header file: ${FLEX_BISON_TARGET_DIR}/FlexLexer.h")
+            file(REMOVE ${FLEX_BISON_TARGET_DIR}/FlexLexer.h)
+          endif()
+
           file (STRINGS "${CURRENT_FLEX_FILE}" FILE_FLEX_CONTENT)
           foreach (FILE_FLEX_CONTENT_LINE ${FILE_FLEX_CONTENT})
             string (REGEX MATCH "%option c\\+\\+" CXX_FLEX_LANGUAGE_FOUND ${FILE_FLEX_CONTENT_LINE})
@@ -120,6 +126,19 @@ foreach (OCCT_PACKAGE ${USED_PACKAGES})
           endforeach()
           set (BISON_OUTPUT_FILE ${CURRENT_BISON_FILE_NAME}.tab.${BISON_OUTPUT_FILE_EXT})
           set (FLEX_OUTPUT_FILE lex.${CURRENT_FLEX_FILE_NAME}.${FLEX_OUTPUT_FILE_EXT})
+
+          if (EXISTS ${FLEX_BISON_TARGET_DIR}/${CURRENT_BISON_FILE_NAME}.tab.${BISON_OUTPUT_FILE_EXT})
+            message (STATUS "Info: remove old output BISON file: ${FLEX_BISON_TARGET_DIR}/${CURRENT_BISON_FILE_NAME}.tab.${BISON_OUTPUT_FILE_EXT}")
+            file(REMOVE ${FLEX_BISON_TARGET_DIR}/${CURRENT_BISON_FILE_NAME}.tab.${BISON_OUTPUT_FILE_EXT})
+          endif()
+          if (EXISTS ${FLEX_BISON_TARGET_DIR}/${CURRENT_BISON_FILE_NAME}.tab.hxx)
+            message (STATUS "Info: remove old output BISON file: ${FLEX_BISON_TARGET_DIR}/${CURRENT_BISON_FILE_NAME}.tab.hxx")
+            file(REMOVE ${FLEX_BISON_TARGET_DIR}/${CURRENT_BISON_FILE_NAME}.tab.hxx)
+          endif()
+          if (EXISTS ${FLEX_BISON_TARGET_DIR}/${FLEX_OUTPUT_FILE})
+            message (STATUS "Info: remove old output FLEX file: ${FLEX_BISON_TARGET_DIR}/${FLEX_OUTPUT_FILE}")
+            file(REMOVE ${FLEX_BISON_TARGET_DIR}/${FLEX_OUTPUT_FILE})
+          endif()
 
           BISON_TARGET (Parser_${CURRENT_BISON_FILE_NAME} ${CURRENT_BISON_FILE} "${FLEX_BISON_TARGET_DIR}/${BISON_OUTPUT_FILE}"
                         COMPILE_FLAGS "-p ${CURRENT_BISON_FILE_NAME} -l -M ${CMAKE_SOURCE_DIR}/${RELATIVE_SOURCES_DIR}/=")
@@ -226,6 +245,18 @@ endif (USE_QT)
 if (EXECUTABLE_PROJECT)
   add_executable (${PROJECT_NAME} ${USED_SRCFILES} ${USED_INCFILES} ${USED_RCFILE} ${RESOURCE_FILES} ${${PROJECT_NAME}_MOC_FILES})
 
+  if (DEFINED ${PROJECT_NAME}_DISABLE_COTIRE AND ${PROJECT_NAME}_DISABLE_COTIRE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ENABLE_PRECOMPILED_HEADER FALSE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+  else()
+    # To avoid excluding of PROJECT_NAME from cotire tool, we may use cotire
+    # COTIRE_PREFIX_HEADER_IGNORE_PATH instead. But, practically it causes many 'undefined symbols' error.
+    # So, we just exclude PROJECT_NAME from cotire list.
+    # if (DEFINED ${PROJECT_NAME}_COTIRE_IGNORE_PATH)
+    #   set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_PREFIX_HEADER_IGNORE_PATH "${${PROJECT_NAME}_COTIRE_IGNORE_PATH}")
+    # endif()
+  endif()
+
   install (TARGETS ${PROJECT_NAME}
            DESTINATION "${INSTALL_DIR_BIN}\${OCCT_INSTALL_BIN_LETTER}")
 
@@ -234,6 +265,18 @@ if (EXECUTABLE_PROJECT)
   endif()
 else()
   add_library (${PROJECT_NAME} ${USED_SRCFILES} ${USED_INCFILES} ${USED_RCFILE} ${RESOURCE_FILES} ${${PROJECT_NAME}_MOC_FILES})
+
+  if (DEFINED ${PROJECT_NAME}_DISABLE_COTIRE AND ${PROJECT_NAME}_DISABLE_COTIRE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ENABLE_PRECOMPILED_HEADER FALSE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+  else()
+    # To avoid excluding of PROJECT_NAME from cotire tool, we may use cotire
+    # COTIRE_PREFIX_HEADER_IGNORE_PATH instead. But, practically it causes many 'undefined symbols' error.
+    # So, we just exclude PROJECT_NAME from cotire list.
+    # if (DEFINED ${PROJECT_NAME}_COTIRE_IGNORE_PATH)
+    #   set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_PREFIX_HEADER_IGNORE_PATH "${${PROJECT_NAME}_COTIRE_IGNORE_PATH}")
+    # endif()
+  endif()
 
   if (MSVC)
     if (BUILD_FORCE_RelWithDebInfo)
@@ -320,10 +363,10 @@ foreach (USED_ITEM ${USED_EXTERNLIB_AND_TOOLKITS})
       else() # get CSF_ value
         set (CURRENT_CSF ${${USED_ITEM}})
         if (NOT "x${CURRENT_CSF}" STREQUAL "x")
-          if ("${CURRENT_CSF}" STREQUAL "CSF_OpenGlLibs")
+          if ("${CURRENT_CSF}" STREQUAL "${CSF_OpenGlLibs}")
             add_definitions (-DHAVE_OPENGL)
           endif()
-          if ("${CURRENT_CSF}" STREQUAL "CSF_OpenGlesLibs")
+          if ("${CURRENT_CSF}" STREQUAL "${CSF_OpenGlesLibs}")
             add_definitions (-DHAVE_GLES2)
           endif()
 

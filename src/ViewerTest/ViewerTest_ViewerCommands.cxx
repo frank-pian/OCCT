@@ -7296,9 +7296,10 @@ static Standard_Integer VAnimation (Draw_Interpretor& theDI,
   Standard_Real aPlaySpeed     = 1.0;
   Standard_Real aPlayStartTime = anAnimation->StartPts();
   Standard_Real aPlayDuration  = anAnimation->Duration();
-  Standard_Boolean isFreeCamera = Standard_False;
+  Standard_Boolean isFreeCamera   = Standard_False;
   Standard_Boolean toPauseOnClick = Standard_True;
-  Standard_Boolean isLockLoop   = Standard_False;
+  Standard_Boolean isLockLoop     = Standard_False;
+  Standard_Boolean toPrintElapsedTime = Standard_False;
 
   // video recording parameters
   TCollection_AsciiString aRecFile;
@@ -7351,6 +7352,11 @@ static Standard_Integer VAnimation (Draw_Interpretor& theDI,
           aPlayDuration = Draw::Atof (theArgVec[anArgIter]);
         }
       }
+    }
+    else if (anArg == "-elapsedtime"
+          || anArg == "-elapsed")
+    {
+      toPrintElapsedTime = Standard_True;
     }
     else if (anArg == "-resume")
     {
@@ -7760,8 +7766,17 @@ static Standard_Integer VAnimation (Draw_Interpretor& theDI,
     }
   }
 
-  ViewerTest::CurrentEventManager()->AbortViewAnimation();
-  ViewerTest::CurrentEventManager()->SetObjectsAnimation (Handle(AIS_Animation)());
+  if (anAnimation.IsNull() || anAnimation->IsStopped())
+  {
+    ViewerTest::CurrentEventManager()->AbortViewAnimation();
+    ViewerTest::CurrentEventManager()->SetObjectsAnimation(Handle(AIS_Animation)());
+  }
+
+  if (toPrintElapsedTime)
+  {
+    theDI << "Elapsed Time: " << anAnimation->ElapsedTime() << " s\n";
+  }
+
   if (!toPlay && aRecFile.IsEmpty())
   {
     return 0;
@@ -9858,13 +9873,13 @@ static int VLight (Draw_Interpretor& theDi,
             << (aLight->IsEnabled() ? "ON" : "OFF") << "\n";
       switch (aLight->Type())
       {
-        case V3d_AMBIENT:
+        case Graphic3d_TypeOfLightSource_Ambient:
         {
           theDi << "  Type:       Ambient\n"
                 << "  Intensity:  " << aLight->Intensity() << "\n";
           break;
         }
-        case V3d_DIRECTIONAL:
+        case Graphic3d_TypeOfLightSource_Directional:
         {
           theDi << "  Type:       Directional\n"
                 << "  Intensity:  " << aLight->Intensity() << "\n"
@@ -9874,7 +9889,7 @@ static int VLight (Draw_Interpretor& theDi,
                 << "  Direction:  " << aLight->PackedDirection().x() << " " << aLight->PackedDirection().y() << " " << aLight->PackedDirection().z() << "\n";
           break;
         }
-        case V3d_POSITIONAL:
+        case Graphic3d_TypeOfLightSource_Positional:
         {
           theDi << "  Type:       Positional\n"
                 << "  Intensity:  " << aLight->Intensity() << "\n"
@@ -9886,7 +9901,7 @@ static int VLight (Draw_Interpretor& theDi,
                 << "  Range:      " << aLight->Range() << "\n";
           break;
         }
-        case V3d_SPOT:
+        case Graphic3d_TypeOfLightSource_Spot:
         {
           theDi << "  Type:       Spot\n"
                 << "  Intensity:  " << aLight->Intensity() << "\n"
@@ -14338,13 +14353,14 @@ List existing animations:
   vanim
 
 Animation playback:
-  vanim name {-play|-resume|-pause|-stop} [playFrom [playDuration]]
-             [-speed Coeff] [-freeLook] [-noPauseOnClick] [-lockLoop]
+  vanim name {-play|-resume|-pause|-stop} [playFrom [playDuration]] [-speed Coeff]
+             [-freeLook] [-noPauseOnClick] [-lockLoop] [-elapsedTime]
 
-  -speed    playback speed (1.0 is normal speed)
-  -freeLook skip camera animations
+  -speed          playback speed (1.0 is normal speed)
+  -freeLook       skip camera animations
   -noPauseOnClick do not pause animation on mouse click
-  -lockLoop disable any interactions
+  -lockLoop       disable any interactions
+  -elapsedTime    prints elapsed time in seconds"
 
 Animation definition:
   vanim Name/sub/name [-clear] [-delete]
@@ -14592,6 +14608,7 @@ Spot light parameters:
  -spotAngle   sets spotlight angle;
  -spotExp     sets spotlight exponenta;
  -headlight   sets headlight flag;
+ -castShadows enables/disables shadow casting;
  -constAtten  (obsolete) sets constant attenuation factor;
  -linearAtten (obsolete) sets linear   attenuation factor.
 
