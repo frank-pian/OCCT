@@ -48,7 +48,7 @@ RUN make -j4 && make install
 WORKDIR $THIRDPARTY_DIR
 RUN git clone --depth 1 https://github.com/gkv311/tcl.git
 WORKDIR tcl
-ADD occ_tcl_build_wasm.sh .
+ADD occ_tcl_build_wasm.sh $THIRDPARTY_DIR/tcl
 RUN /bin/bash occ_tcl_build_wasm.sh
 
 # Build occt
