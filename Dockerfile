@@ -9,7 +9,7 @@ ENV THIRDPARTY_DIR /opt/3rdparty
 
 RUN apt-get clean && apt-get update
 RUN apt-get -y install build-essential \
-	git wget vim\
+	git wget vim \
 	cmake automake libtool autoconf
 
 # Build RapidJson
