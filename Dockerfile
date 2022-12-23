@@ -1,9 +1,9 @@
 FROM emscripten/emsdk:3.1.3 AS build-stage
 
-ENV http_proxy "http://192.168.129.1:10809"
-ENV HTTP_PROXY "http://192.168.129.1:10809"
-ENV https_proxy "http://192.168.129.1:10809"
-ENV HTTPS_PROXY "http://192.168.129.1:10809"
+# ENV http_proxy "http://192.168.129.1:10809"
+# ENV HTTP_PROXY "http://192.168.129.1:10809"
+# ENV https_proxy "http://192.168.129.1:10809"
+# ENV HTTPS_PROXY "http://192.168.129.1:10809"
 
 ENV THIRDPARTY_DIR /opt/3rdparty
 
